@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>HTML5 Canvas - raps</title>
+        <link rel="stylesheet" href="raps.css" type="text/css" media="screen">
+<!--        <script type="text/javascript" src="jquery-3.2.1.min.js"></script>-->
+		<script src='testfile.js'></script>
+        <script src='raps.js'></script>
+	</head>
+	<body onload="startGame();">
+
+        <div class="left">
+            <canvas id="raps" width="400" height="400"></canvas>
+        </div>
+        
+        <div class="right" id="scoreCard">
+            <h1>Move List</h1>
+            <ol type="1" id="moveList">
+            </ol>
+        </div>
+        
+        <div style="clear: both;"></div>
+        
+        <div>
+            <button id="resetCanvas" class="button left" onclick='startGame();'>Reset</button>
+        </div>
+        
+        <div>
+            <button id="undoMove" class="button right"
+            onclick="undoOneMove();">Undo</button>
+        </div>
+        
+	</body>
+</html>
