@@ -12,8 +12,10 @@
 		<title>James' Projects - raps</title>
         <link rel="stylesheet" href="main.css" type="text/css" media="screen">
 <!--        <script type="text/javascript" src="jquery-3.2.1.min.js"></script>-->
+        
 		<script src='testfile.js'></script>
         <script src='raps.js'></script>
+        
         
 	</head>
 	<body onload="startGame();">
@@ -40,7 +42,7 @@
                 </div>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="https://jamesheppell.github.io/raps/rules">Rules<span class="sr-only"></span></a>
+                <a class="nav-link" href="#" onclick="showRules();">Rules<span class="sr-only"></span></a>
               </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
@@ -58,12 +60,12 @@
         </div>
         </div>
         
-        <div class="container">
+        <div class="container" id="mainSection">
         
             <div class="row">
                 <div class="column left">
                     <div>
-                        <button id="resetCanvas" class="button" onclick='startGame();'>Reset</button>
+                        <button id="resetCanvas" class="button" onclick="startGame();">Reset</button>
                     </div>
 
                     <div>
@@ -83,6 +85,18 @@
                 </div>
        
             </div>
+        
+        </div>
+        
+        <div class="container hideSection" id="rulesSection">
+        
+            <div>
+                Hello World
+                <button class="button"
+                        onclick="unshowRules();">Back</button>
+            </div>
+            
+            
         
         </div>
         
@@ -109,6 +123,15 @@
       
     <script type="text/javascript">
         
+        function showRules(){
+            $("#mainSection").addClass("hideSection");
+            $("#rulesSection").removeClass("hideSection");
+        }
+        
+        function unshowRules(){
+            $("#mainSection").removeClass("hideSection");
+            $("#rulesSection").addClass("hideSection");
+        }
         
     </script>
     
