@@ -65,6 +65,9 @@
             <div class="row">
                 <div class="column left">
                     <div>
+                        <button id="rulesButton" class="button" onclick="showRules();">Rules</button>
+                    </div>
+                    <div>
                         <button id="resetCanvas" class="button" onclick="startGame();">Reset</button>
                     </div>
 
@@ -91,7 +94,11 @@
         <div class="container hideSection" id="rulesSection">
         
             <div>
-                Hello World
+                <h2>Aim</h2>
+                <p>Win by getting one of your pieces to the other side</p>
+                <h2>Movement</h2>
+                <p>Each piece can move one square in any direction, you can also hop over only one of your own pieces to an unoccupied space. To capture an enemy piece you must hop over it, if you can capture an enemy piece you are forced to do so.</p>
+                <p><b>That's it! Enjoy...</b></p>
                 <button class="button"
                         onclick="unshowRules();">Back</button>
             </div>
