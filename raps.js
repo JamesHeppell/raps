@@ -264,6 +264,9 @@ function drawBlock(iRowCounter, iBlockCounter) {
 		BLOCK_SIZE, BLOCK_SIZE);
 
 	ctx.stroke();
+    
+    // Draw outline
+	drawBoardOutline();
 }
 
 function getImageCoords(pieceCode, bBlackTeam, imageBlockSize) {
@@ -328,6 +331,12 @@ function drawBoard() {
 	}
 
 	// Draw outline
+	drawBoardOutline();
+}
+
+function drawBoardOutline(){
+    // Draw outline
+    ctx.strokeStyle = "black";
 	ctx.lineWidth = 3;
 	ctx.strokeRect(0, 0,
 		NUMBER_OF_ROWS * BLOCK_SIZE,
@@ -412,6 +421,9 @@ function drawOutline(colourToHighlight, ctx, pieceAtBlock){
 		(pieceAtBlock.row * BLOCK_SIZE) + SELECT_LINE_WIDTH,
 		BLOCK_SIZE - (SELECT_LINE_WIDTH * 2),
 		BLOCK_SIZE - (SELECT_LINE_WIDTH * 2));
+    
+    // Draw outline
+	drawBoardOutline();
 }
 
 function selectPiece(pieceAtBlock) {
@@ -478,6 +490,9 @@ function movePiece(clickedBlock, enemyPiece) {
 
 	// Draw the piece in the new position
 	drawPiece(selectedPiece, (currentTurn === BLACK_TEAM));
+    
+    // Draw outline
+	drawBoardOutline();
     
     // check win condition before changing turn
     checkWinCondition(clickedBlock);
