@@ -9,14 +9,11 @@ var BLOCK_COLOUR_1 = '#9f7119',
 	HIGHLIGHT_COLOUR = '#fb0006',
     POSSIBLE_MOVE_COLOUR = 'blue';
 
-var piecePositions = null;
-
 var PIECE_PAWN = 0,
 	IN_PLAY = 0,
 	TAKEN = 1,
 	pieces = null,
 	ctx = null,
-	json = null,
 	canvas = null,
 	BLACK_TEAM = 0,
 	WHITE_TEAM = 1,
@@ -37,6 +34,9 @@ var OnePlayerButton = null;
 var TwoPlayerButton = null;
 var GAMETYPE = null;
 var computerLevel = null;
+
+var myBoard = new Board(4);
+
 
 function screenToBlock(x, y) {
 	var block =  {
@@ -71,17 +71,17 @@ function getPieceAtBlockForTeam(teamOfPieces, clickedBlock) {
 }
 
 function blockOccupiedByEnemy(clickedBlock) {
-	var team = (currentTurn === BLACK_TEAM ? json.white : json.black);
+	var team = (currentTurn === BLACK_TEAM ? myBoard.json.white : myBoard.json.black);
 
 	return getPieceAtBlockForTeam(team, clickedBlock);
 }
 
 
 function blockOccupied(clickedBlock) {
-	var pieceAtBlock = getPieceAtBlockForTeam(json.black, clickedBlock);
+	var pieceAtBlock = getPieceAtBlockForTeam(myBoard.json.black, clickedBlock);
 
 	if (pieceAtBlock === null) {
-		pieceAtBlock = getPieceAtBlockForTeam(json.white, clickedBlock);
+		pieceAtBlock = getPieceAtBlockForTeam(myBoard.json.white, clickedBlock);
 	}
 
 	return (pieceAtBlock !== null);
@@ -197,9 +197,9 @@ function checkJumpingEnemy(pieceAtBlock, isCheckingForced){
 function isForceCapture(){
     //reset forced selection global
     FORCED_SELECTION=[];
-    var teamOfPieces = json.black;
+    var teamOfPieces = myBoard.json.black;
     if (currentTurn === WHITE_TEAM){
-        teamOfPieces = json.white;
+        teamOfPieces = myBoard.json.white;
     }
         
     for (var iPieceCounter = 0; iPieceCounter < teamOfPieces.length; iPieceCounter++) {
@@ -237,7 +237,7 @@ function canSelectedMoveToBlock(selectedPiece, clickedBlock) {
 
 function getPieceAtBlock(clickedBlock) {
 
-	var team = (currentTurn === BLACK_TEAM ? json.black : json.white);
+	var team = (currentTurn === BLACK_TEAM ? myBoard.json.black : myBoard.json.white);
 
 	return getPieceAtBlockForTeam(team, clickedBlock);
 }
@@ -310,8 +310,8 @@ function drawTeamOfPieces(teamOfPieces, bBlackTeam) {
 }
 
 function drawPieces() {
-	drawTeamOfPieces(json.black, true);
-	drawTeamOfPieces(json.white, false);
+	drawTeamOfPieces(myBoard.json.black, true);
+	drawTeamOfPieces(myBoard.json.white, false);
 }
 
 function drawRow(iRowCounter) {
@@ -341,77 +341,6 @@ function drawBoardOutline(){
 	ctx.strokeRect(0, 0,
 		NUMBER_OF_ROWS * BLOCK_SIZE,
 		NUMBER_OF_COLS * BLOCK_SIZE);
-}
-
-function defaultPositions() {
-	json = {
-		"white":
-			[
-				{
-					"piece": PIECE_PAWN,
-					"row": 0,
-					"col": 0,
-					"status": IN_PLAY
-				},
-				{
-					"piece": PIECE_PAWN,
-					"row": 0,
-					"col": 1,
-					"status": IN_PLAY
-				},
-				{
-					"piece": PIECE_PAWN,
-					"row": 0,
-					"col": 2,
-					"status": IN_PLAY
-				},
-				{
-					"piece": PIECE_PAWN,
-					"row": 0,
-					"col": 3,
-					"status": (NUMBER_OF_COLS >= 4 ? IN_PLAY : TAKEN)
-				},
-                {
-                    "piece": PIECE_PAWN,
-					"row": 0,
-					"col": 4,
-                    "status": (NUMBER_OF_COLS >= 5 ? IN_PLAY : TAKEN)
-                }
-			],
-		"black":
-			[
-				{
-					"piece": PIECE_PAWN,
-					"row": NUMBER_OF_ROWS - 1,
-					"col": 0,
-					"status": IN_PLAY
-				},
-				{
-					"piece": PIECE_PAWN,
-					"row": NUMBER_OF_ROWS - 1,
-					"col": 1,
-					"status": IN_PLAY
-				},
-				{
-					"piece": PIECE_PAWN,
-					"row": NUMBER_OF_ROWS - 1,
-					"col": 2,
-					"status": IN_PLAY
-				},
-				{
-					"piece": PIECE_PAWN,
-					"row": NUMBER_OF_ROWS - 1,
-					"col": 3,
-					"status": (NUMBER_OF_COLS >= 4 ? IN_PLAY : TAKEN)
-				},
-                {
-                    "piece": PIECE_PAWN,
-					"row": NUMBER_OF_ROWS - 1,
-					"col": 4,
-                    "status": (NUMBER_OF_COLS >= 5 ? IN_PLAY : TAKEN)
-                }
-			]
-	};
 }
 
 function drawOutline(colourToHighlight, ctx, pieceAtBlock){
@@ -476,8 +405,8 @@ function movePiece(clickedBlock, enemyPiece) {
     writeToScoreCard(moveText);
     
 
-	var team = (currentTurn === WHITE_TEAM ? json.white : json.black),
-		opposite = (currentTurn !== WHITE_TEAM ? json.white : json.black);
+	var team = (currentTurn === WHITE_TEAM ? myBoard.json.white : myBoard.json.black),
+		opposite = (currentTurn !== WHITE_TEAM ? myBoard.json.white : myBoard.json.black);
     
 	team[selectedPiece.position].col = clickedBlock.col;
 	team[selectedPiece.position].row = clickedBlock.row;
@@ -512,7 +441,7 @@ function processComputerMove(){
         //then randomly pick one of them.
         var choosingPiece = true;
         var clickedBlock;
-        var team = (currentTurn === WHITE_TEAM ? json.white : json.black);
+        var team = (currentTurn === WHITE_TEAM ? myBoard.json.white : myBoard.json.black);
         var randPiece;
         var randidx;
         var piecePos;
@@ -551,9 +480,24 @@ function processComputerMove(){
     }
     
     console.log("test output from importing another function...");
-    scoreBoard(json, NUMBER_OF_ROWS);
+    scoreBoard(myBoard.json, NUMBER_OF_ROWS);
+    
+    var newBoard = new Board(NUMBER_OF_ROWS);
+    newBoard.setPositions(myBoard.json);
+    
+    var possible_moves = newBoard.getPossibleMovesForPlayer(currentTurn);
+    
+    console.log("num pieces to move are: " + possible_moves.length.toString());
+    var moveCount = newBoard.getTotalMovesForPlayer(currentTurn);
+    console.log("Total moves: " + moveCount.toString());
+    if (possible_moves.length > 0){
+        console.log("First piece at (row, col) (" + possible_moves[0].piece.row.toString() + ", " + possible_moves[0].piece.col.toString() + ") can move to (" + possible_moves[0].moves[0].row.toString() + "," + possible_moves[0].moves[0].col.toString() + ")");
+    }
+    
+    console.log("The board is size: " + newBoard.size.toString());
     
 }
+
 
 function getPositionOfPossibleEnemyPiece(clickedBlock){
     //get position of possible enemy piece
@@ -596,8 +540,8 @@ function checkWinCondition(clickedBlock){
     console.log("current turn is " + currentTurn);
     console.log("moved to row " + clickedBlock.row);
     console.log("moved to col " + clickedBlock.col);
-    console.log("No Black pieces remaining: " + checkNoPiecesLeft(json.black));
-    console.log("No White pieces remaining: " + checkNoPiecesLeft(json.white));
+    console.log("No Black pieces remaining: " + checkNoPiecesLeft(myBoard.json.black));
+    console.log("No White pieces remaining: " + checkNoPiecesLeft(myBoard.json.white));
     
     if (currentTurn == WHITE_TEAM && clickedBlock.row == (NUMBER_OF_ROWS - 1)){
         WINNING_PLAYER = "White";
@@ -607,11 +551,11 @@ function checkWinCondition(clickedBlock){
         WINNING_PLAYER = "Black";
         GAME_FINISHED = true;
         draw();
-    } else if (checkNoPiecesLeft(json.black)){
+    } else if (checkNoPiecesLeft(myBoard.json.black)){
         WINNING_PLAYER = "White";
         GAME_FINISHED = true;
         draw();
-    } else if (checkNoPiecesLeft(json.white)){
+    } else if (checkNoPiecesLeft(myBoard.json.white)){
         WINNING_PLAYER = "Black";
         GAME_FINISHED = true;
         draw();
@@ -773,6 +717,7 @@ function resetGlobals(){
     computerLevel = "EASY";
 }
 
+
 function startGame(){
     // Main entry point from the HTML5
     canvas = document.getElementById('raps');
@@ -807,8 +752,8 @@ function draw() {
 
     // Draw the background
     drawBoard();
-
-    defaultPositions();
+    
+    myBoard.setDefaultPositions();
 
     // Draw pieces
     pieces = new Image();
