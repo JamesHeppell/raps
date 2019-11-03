@@ -63,39 +63,12 @@ function scoreWinPosition(jsonPieces, boardSize, winValue){
 }
 
 
-function getForcedMoves(piece){
-    var forcedMovesForTeam = [];
-    for (var jrow = -2; jrow<4; jrow+=2){
-        for (var jcol = -2; jcol<4; jcol+=2){
-            var rowToConsider = piece.row + jrow;
-            var colToConsider = piece.col + jcol;
-            if (rowToConsider < 0 || 
-                rowToConsider >= NUMBER_OF_ROWS || 
-                colToConsider < 0 || 
-                colToConsider >= NUMBER_OF_COLS ||
-                (jrow == 0 && jcol == 0)){
-                // not a valid block to consider
-            } else{
-                //check if block is empty, and inbetween is occupied
-                var blockPos = {"row":rowToConsider, "col":colToConsider};
-                var midRow = (rowToConsider + piece.row)/2;
-                var midCol = (colToConsider + piece.col)/2;
-                var midPos = {"row":midRow, "col":midCol};
-                if (!blockOccupied(blockPos) && blockOccupiedByEnemy(midPos)){
-                    forcedMovesForTeam.push(piece);  
-                }
-            }
-        }
-    }  
-    
-    return forcedMovesForTeam;
-}
 
-
-class Board{
+class Game{
     constructor(size){
         this.size = size;
         this.json = null;
+        this.moveList = [];
     }
     
     getSize(){
@@ -106,7 +79,58 @@ class Board{
         this.json = _json;
     }
     
-    getTotalMovesForPlayer(current_turn){
+    resetMoveList(){
+        this.moveList = [];
+    }
+    
+    addMoveToList(move){
+        this.moveList.push(move);
+    }
+    
+    addMoveToJson(move, current_turn){
+        
+    }
+    
+    canPawnMoveToBlock(piece, clickedBlock) {
+        //assume peice has been selected (due to force move requirements)
+        var movesValues = this.getPossibleMovesForPiece(piece);
+        var moves = movesValues.moves;
+        
+        for (var i=0; i<moves.length; i++){
+            if(clickedBlock.col == moves[i].col &&
+               clickedBlock.row == moves[i].row){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    isNoPiecesLeftForWhite(){
+        var teamOfPieces = this.json.white;
+        var isNoPiecesLeft = this.isNoPiecesLeftForTeam(teamOfPieces);
+        return isNoPiecesLeft;  
+    }
+    
+    isNoPiecesLeftForBlack(){
+        var teamOfPieces = this.json.black;
+        var isNoPiecesLeft = this.isNoPiecesLeftForTeam(teamOfPieces);
+        return isNoPiecesLeft;  
+    }
+    
+    isNoPiecesLeftForTeam(teamOfPieces){
+        var iPieceCounter = 0;
+        var curPiece = null;
+        
+        for (iPieceCounter = 0; iPieceCounter < teamOfPieces.length; iPieceCounter++) {
+            curPiece = teamOfPieces[iPieceCounter];
+            if (curPiece.status === IN_PLAY){
+                return false;
+            } 
+        }
+        return true
+    }   
+    
+    getMoveCountForPlayer(current_turn){
         var possible_moves = this.getPossibleMovesForPlayer(current_turn);
         var iPieceCounter = null,
             moveCount = 0;
@@ -416,7 +440,26 @@ class Board{
                     };
     }
     
+    hasGameEnded(clickedBlock, current_turn){
+        console.log("moved to row " + clickedBlock.row);
+        console.log("moved to col " + clickedBlock.col);
+        console.log("No Black pieces remaining: " + this.isNoPiecesLeftForBlack());
+        console.log("No White pieces remaining: " + this.isNoPiecesLeftForWhite());
+        
+        //assumption you can only win on your turn, you cant lose -> hence all reutrn true, no extra 
+        // info needed. 
+        
+        if (current_turn == WHITE_TEAM && clickedBlock.row == (NUMBER_OF_ROWS - 1)){
+            return true;
+        } else if (current_turn == BLACK_TEAM && clickedBlock.row == 0){
+            return true;
+        } else if (this.isNoPiecesLeftForBlack()){
+            return true;
+        } else if (this.isNoPiecesLeftForWhite()){
+            return true;
+        }
     
+    }
     
 }
 

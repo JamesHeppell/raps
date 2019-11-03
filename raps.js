@@ -27,15 +27,12 @@ var WINNING_PLAYER = "White";
 var FORCED_SELECTION = [];
 var POSSIBLE_MOVES = [];
 
-var GAME_RECORD = {"size":NUMBER_OF_COLS,
-                   "moveList":[]};
-
 var OnePlayerButton = null;
 var TwoPlayerButton = null;
 var GAMETYPE = null;
 var computerLevel = null;
 
-var myBoard = new Board(4);
+var myGame = new Game(4);
 
 
 function screenToBlock(x, y) {
@@ -71,30 +68,20 @@ function getPieceAtBlockForTeam(teamOfPieces, clickedBlock) {
 }
 
 function blockOccupiedByEnemy(clickedBlock) {
-	var team = (currentTurn === BLACK_TEAM ? myBoard.json.white : myBoard.json.black);
+	var team = (currentTurn === BLACK_TEAM ? myGame.json.white : myGame.json.black);
 
 	return getPieceAtBlockForTeam(team, clickedBlock);
 }
 
 
 function blockOccupied(clickedBlock) {
-	var pieceAtBlock = getPieceAtBlockForTeam(myBoard.json.black, clickedBlock);
+	var pieceAtBlock = getPieceAtBlockForTeam(myGame.json.black, clickedBlock);
 
 	if (pieceAtBlock === null) {
-		pieceAtBlock = getPieceAtBlockForTeam(myBoard.json.white, clickedBlock);
+		pieceAtBlock = getPieceAtBlockForTeam(myGame.json.white, clickedBlock);
 	}
 
 	return (pieceAtBlock !== null);
-}
-
-function canPawnMoveToBlock(selectedPiece, clickedBlock) {
-    for (var i=0; i<POSSIBLE_MOVES.length; i++){
-        if(clickedBlock.col == POSSIBLE_MOVES[i].col &&
-           clickedBlock.row == POSSIBLE_MOVES[i].row){
-            return true;
-        }
-    }
-	return false;
 }
 
 function setPossibleMoves(pieceAtBlock){
@@ -197,9 +184,9 @@ function checkJumpingEnemy(pieceAtBlock, isCheckingForced){
 function isForceCapture(){
     //reset forced selection global
     FORCED_SELECTION=[];
-    var teamOfPieces = myBoard.json.black;
+    var teamOfPieces = myGame.json.black;
     if (currentTurn === WHITE_TEAM){
-        teamOfPieces = myBoard.json.white;
+        teamOfPieces = myGame.json.white;
     }
         
     for (var iPieceCounter = 0; iPieceCounter < teamOfPieces.length; iPieceCounter++) {
@@ -230,14 +217,14 @@ function unHighlightPossibleMoves(){
 function canSelectedMoveToBlock(selectedPiece, clickedBlock) {
 	var bCanMove = false;
 
-    bCanMove = canPawnMoveToBlock(selectedPiece, clickedBlock);
+    bCanMove = myGame.canPawnMoveToBlock(selectedPiece, clickedBlock);
 
 	return bCanMove;
 }
 
 function getPieceAtBlock(clickedBlock) {
 
-	var team = (currentTurn === BLACK_TEAM ? myBoard.json.black : myBoard.json.white);
+	var team = (currentTurn === BLACK_TEAM ? myGame.json.black : myGame.json.white);
 
 	return getPieceAtBlockForTeam(team, clickedBlock);
 }
@@ -310,8 +297,8 @@ function drawTeamOfPieces(teamOfPieces, bBlackTeam) {
 }
 
 function drawPieces() {
-	drawTeamOfPieces(myBoard.json.black, true);
-	drawTeamOfPieces(myBoard.json.white, false);
+	drawTeamOfPieces(myGame.json.black, true);
+	drawTeamOfPieces(myGame.json.white, false);
 }
 
 function drawRow(iRowCounter) {
@@ -394,10 +381,11 @@ function movePiece(clickedBlock, enemyPiece) {
 	drawBlock(selectedPiece.col, selectedPiece.row);
     unHighlightPossibleMoves();
     
-    //record the game after a move has been played (undo button??)
-    GAME_RECORD.moveList.push({"from":{"row":selectedPiece.row, "col":selectedPiece.col} ,                                  "to":{"row":clickedBlock.row, "col":clickedBlock.col}, "taken": enemyPiece
-                              });
-    console.log("Number of moves in record: " + GAME_RECORD.moveList.length);
+    
+    var move = {"from":{"row":selectedPiece.row, "col":selectedPiece.col} ,                                  "to":{"row":clickedBlock.row, "col":clickedBlock.col}, "taken": enemyPiece};
+    myGame.addMoveToList(move);
+    
+    console.log("Number of moves in myGame record: " + myGame.moveList.length);
     
     var moveText = "(" + selectedPiece.row + ", " + selectedPiece.col + ")" +
                    "  to  (" + clickedBlock.row + ", " + clickedBlock.col + ")";
@@ -405,8 +393,8 @@ function movePiece(clickedBlock, enemyPiece) {
     writeToScoreCard(moveText);
     
 
-	var team = (currentTurn === WHITE_TEAM ? myBoard.json.white : myBoard.json.black),
-		opposite = (currentTurn !== WHITE_TEAM ? myBoard.json.white : myBoard.json.black);
+	var team = (currentTurn === WHITE_TEAM ? myGame.json.white : myGame.json.black),
+		opposite = (currentTurn !== WHITE_TEAM ? myGame.json.white : myGame.json.black);
     
 	team[selectedPiece.position].col = clickedBlock.col;
 	team[selectedPiece.position].row = clickedBlock.row;
@@ -424,7 +412,17 @@ function movePiece(clickedBlock, enemyPiece) {
 	drawBoardOutline();
     
     // check win condition before changing turn
-    checkWinCondition(clickedBlock);
+    var isGameOver = myGame.hasGameEnded(clickedBlock, currentTurn);
+    if (isGameOver){
+        if (currentTurn === WHITE_TEAM){
+            WINNING_PLAYER = "White";
+        }else{
+            WINNING_PLAYER = "Black"
+        }
+        GAME_FINISHED = true;
+        draw();
+    }
+    
     
 	currentTurn = (currentTurn === WHITE_TEAM ? BLACK_TEAM : WHITE_TEAM);
 
@@ -441,7 +439,7 @@ function processComputerMove(){
         //then randomly pick one of them.
         var choosingPiece = true;
         var clickedBlock;
-        var team = (currentTurn === WHITE_TEAM ? myBoard.json.white : myBoard.json.black);
+        var team = (currentTurn === WHITE_TEAM ? myGame.json.white : myGame.json.black);
         var randPiece;
         var randidx;
         var piecePos;
@@ -480,21 +478,19 @@ function processComputerMove(){
     }
     
     console.log("test output from importing another function...");
-    scoreBoard(myBoard.json, NUMBER_OF_ROWS);
+    scoreBoard(myGame.json, NUMBER_OF_ROWS);
     
-    var newBoard = new Board(NUMBER_OF_ROWS);
-    newBoard.setPositions(myBoard.json);
+    var newGame = new Game(NUMBER_OF_ROWS);
+    newGame.setPositions(myGame.json);
     
-    var possible_moves = newBoard.getPossibleMovesForPlayer(currentTurn);
+    var possible_moves = newGame.getPossibleMovesForPlayer(currentTurn);
     
     console.log("num pieces to move are: " + possible_moves.length.toString());
-    var moveCount = newBoard.getTotalMovesForPlayer(currentTurn);
+    var moveCount = newGame.getMoveCountForPlayer(currentTurn);
     console.log("Total moves: " + moveCount.toString());
     if (possible_moves.length > 0){
         console.log("First piece at (row, col) (" + possible_moves[0].piece.row.toString() + ", " + possible_moves[0].piece.col.toString() + ") can move to (" + possible_moves[0].moves[0].row.toString() + "," + possible_moves[0].moves[0].col.toString() + ")");
     }
-    
-    console.log("The board is size: " + newBoard.size.toString());
     
 }
 
@@ -535,44 +531,7 @@ function colorRect(leftX,topY, width,height, drawColor, ctx) {
 	ctx.fillStyle = drawColor;
 	ctx.fillRect(leftX,topY, width,height);
 }
-
-function checkWinCondition(clickedBlock){
-    console.log("current turn is " + currentTurn);
-    console.log("moved to row " + clickedBlock.row);
-    console.log("moved to col " + clickedBlock.col);
-    console.log("No Black pieces remaining: " + checkNoPiecesLeft(myBoard.json.black));
-    console.log("No White pieces remaining: " + checkNoPiecesLeft(myBoard.json.white));
-    
-    if (currentTurn == WHITE_TEAM && clickedBlock.row == (NUMBER_OF_ROWS - 1)){
-        WINNING_PLAYER = "White";
-        GAME_FINISHED = true;
-        draw();
-    } else if (currentTurn == BLACK_TEAM && clickedBlock.row == 0){
-        WINNING_PLAYER = "Black";
-        GAME_FINISHED = true;
-        draw();
-    } else if (checkNoPiecesLeft(myBoard.json.black)){
-        WINNING_PLAYER = "White";
-        GAME_FINISHED = true;
-        draw();
-    } else if (checkNoPiecesLeft(myBoard.json.white)){
-        WINNING_PLAYER = "Black";
-        GAME_FINISHED = true;
-        draw();
-    }
-    
-}
-
-
-function checkNoPiecesLeft(teamOfPieces){
-    for (var iPieceCounter = 0; iPieceCounter < teamOfPieces.length; iPieceCounter++) {
-		var curPiece = teamOfPieces[iPieceCounter];
-		if (curPiece.status === IN_PLAY){
-			return false;
-		} 
-	}
-    return true
-}    
+  
 
 function undoOneMove(){
     //TODO
@@ -584,15 +543,6 @@ function undoOneMove(){
     }else{
         alert("Game type not implemented...")
     }
-    
-    
-    
-    //json - current positions
-    //moveList (from document) - current move list to remove 
-    //GAME_RECORD - current dict of moves
-    var allMoves = GAME_RECORD.moveList;
-    
-    
     
     removeLastMoveFromScoreCard();
     
@@ -753,7 +703,8 @@ function draw() {
     // Draw the background
     drawBoard();
     
-    myBoard.setDefaultPositions();
+    myGame.resetMoveList();
+    myGame.setDefaultPositions();
 
     // Draw pieces
     pieces = new Image();
