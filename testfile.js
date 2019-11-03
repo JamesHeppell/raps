@@ -69,6 +69,9 @@ class Game{
         this.size = size;
         this.json = null;
         this.moveList = [];
+        this.isGameFinished = false;
+        this.piecePawn = 0;
+        this.currentTurn = WHITE_TEAM;
     }
     
     getSize(){
@@ -87,7 +90,7 @@ class Game{
         this.moveList.push(move);
     }
     
-    addMoveToJson(move, current_turn){
+    addMoveToJson(move){
         
     }
     
@@ -130,8 +133,9 @@ class Game{
         return true
     }   
     
-    getMoveCountForPlayer(current_turn){
-        var possible_moves = this.getPossibleMovesForPlayer(current_turn);
+    
+    getMoveCountForPlayer(){
+        var possible_moves = this.getPossibleMovesForPlayer();
         var iPieceCounter = null,
             moveCount = 0;
         for (iPieceCounter = 0; iPieceCounter < possible_moves.length; iPieceCounter++) {
@@ -141,8 +145,8 @@ class Game{
         return moveCount
     }
     
-    getPossibleMovesForPlayer(current_turn){
-        var teamOfPieces = this.getPiecesInPlay(current_turn);
+    getPossibleMovesForPlayer(){
+        var teamOfPieces = this.getPiecesInPlay();
         
         var iPieceCounter = null,
         curPiece = null,
@@ -153,7 +157,7 @@ class Game{
         isForced = false,
         foundForcedMoves = false;
         
-        //first iterate to find is there are forced moves and set foundForcedMoves
+        //first iterate to find if there are forced moves and set foundForcedMoves
         for (iPieceCounter = 0; iPieceCounter < teamOfPieces.length; iPieceCounter++) {
                 curPiece = teamOfPieces[iPieceCounter];
                 possible_moves_values = this.getPossibleMovesForPiece(curPiece);
@@ -188,10 +192,10 @@ class Game{
         return possible_moves;
     }
     
-    getPiecesInPlay(current_turn){
+    getPiecesInPlay(){
         var teamPiecesInPlay = [];
         
-        if (current_turn == WHITE_TEAM){
+        if (this.currentTurn == WHITE_TEAM){
             for (var iPieceCounter = 0; iPieceCounter < this.json.white.length; iPieceCounter++) {
                 var curPiece = this.json.white[iPieceCounter];
                 if (curPiece.status === IN_PLAY){
@@ -330,7 +334,7 @@ class Game{
     }
     
     isblockOccupiedByEnemy(blockPos) {
-        var team = (currentTurn === BLACK_TEAM ? this.json.white : this.json.black);
+        var team = (this.currentTurn === BLACK_TEAM ? this.json.white : this.json.black);
 
         return this.getPieceAtBlockForTeam(team, blockPos);
     }
@@ -374,31 +378,31 @@ class Game{
                         "white":
                             [
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": 0,
                                     "col": 0,
                                     "status": IN_PLAY
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": 0,
                                     "col": 1,
                                     "status": IN_PLAY
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": 0,
                                     "col": 2,
                                     "status": IN_PLAY
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": 0,
                                     "col": 3,
                                     "status": (NUMBER_OF_COLS >= 4 ? IN_PLAY : TAKEN)
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": 0,
                                     "col": 4,
                                     "status": (NUMBER_OF_COLS >= 5 ? IN_PLAY : TAKEN)
@@ -407,31 +411,31 @@ class Game{
                         "black":
                             [
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": NUMBER_OF_ROWS - 1,
                                     "col": 0,
                                     "status": IN_PLAY
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": NUMBER_OF_ROWS - 1,
                                     "col": 1,
                                     "status": IN_PLAY
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": NUMBER_OF_ROWS - 1,
                                     "col": 2,
                                     "status": IN_PLAY
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": NUMBER_OF_ROWS - 1,
                                     "col": 3,
                                     "status": (NUMBER_OF_COLS >= 4 ? IN_PLAY : TAKEN)
                                 },
                                 {
-                                    "piece": PIECE_PAWN,
+                                    "piece": this.piecePawn,
                                     "row": NUMBER_OF_ROWS - 1,
                                     "col": 4,
                                     "status": (NUMBER_OF_COLS >= 5 ? IN_PLAY : TAKEN)
@@ -440,7 +444,7 @@ class Game{
                     };
     }
     
-    hasGameEnded(clickedBlock, current_turn){
+    hasGameEnded(clickedBlock){
         console.log("moved to row " + clickedBlock.row);
         console.log("moved to col " + clickedBlock.col);
         console.log("No Black pieces remaining: " + this.isNoPiecesLeftForBlack());
@@ -449,9 +453,9 @@ class Game{
         //assumption you can only win on your turn, you cant lose -> hence all reutrn true, no extra 
         // info needed. 
         
-        if (current_turn == WHITE_TEAM && clickedBlock.row == (NUMBER_OF_ROWS - 1)){
+        if (this.currentTurn == WHITE_TEAM && clickedBlock.row == (NUMBER_OF_ROWS - 1)){
             return true;
-        } else if (current_turn == BLACK_TEAM && clickedBlock.row == 0){
+        } else if (this.currentTurn == BLACK_TEAM && clickedBlock.row == 0){
             return true;
         } else if (this.isNoPiecesLeftForBlack()){
             return true;

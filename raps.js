@@ -4,36 +4,26 @@ var NUMBER_OF_COLS = 4,
 
 //TODO enable a n by n board n >= 3
 
-var BLOCK_COLOUR_1 = '#9f7119',
-	BLOCK_COLOUR_2 = '#debf83',
-	HIGHLIGHT_COLOUR = '#fb0006',
-    POSSIBLE_MOVE_COLOUR = 'blue';
-
-var PIECE_PAWN = 0,
-	IN_PLAY = 0,
+var IN_PLAY = 0,
 	TAKEN = 1,
 	pieces = null,
-	ctx = null,
 	canvas = null,
 	BLACK_TEAM = 0,
 	WHITE_TEAM = 1,
-	SELECT_LINE_WIDTH = 5,
-	currentTurn = WHITE_TEAM,
 	selectedPiece = null;
 
-var GAME_FINISHED = false;
 var WINNING_PLAYER = "White";
 
 var FORCED_SELECTION = [];
 var POSSIBLE_MOVES = [];
 
-var OnePlayerButton = null;
-var TwoPlayerButton = null;
 var GAMETYPE = null;
 var computerLevel = null;
 
+//Load other classes
 var myGame = new Game(4);
-
+var myDisplay = new DisplayCanvas(4);
+var myMoveListDisplay = new DisplayMoveList();
 
 function screenToBlock(x, y) {
 	var block =  {
@@ -68,7 +58,7 @@ function getPieceAtBlockForTeam(teamOfPieces, clickedBlock) {
 }
 
 function blockOccupiedByEnemy(clickedBlock) {
-	var team = (currentTurn === BLACK_TEAM ? myGame.json.white : myGame.json.black);
+	var team = (myGame.currentTurn === BLACK_TEAM ? myGame.json.white : myGame.json.black);
 
 	return getPieceAtBlockForTeam(team, clickedBlock);
 }
@@ -185,7 +175,7 @@ function isForceCapture(){
     //reset forced selection global
     FORCED_SELECTION=[];
     var teamOfPieces = myGame.json.black;
-    if (currentTurn === WHITE_TEAM){
+    if (myGame.currentTurn === WHITE_TEAM){
         teamOfPieces = myGame.json.white;
     }
         
@@ -200,20 +190,6 @@ function isForceCapture(){
 }
 
 
-function highlightPossibleMoves(pieceAtBlock){
-    //assume selected peice has been set!
-    setPossibleMoves(pieceAtBlock);
-    for (var i=0; i<POSSIBLE_MOVES.length; i++){
-        drawOutline(POSSIBLE_MOVE_COLOUR, ctx, POSSIBLE_MOVES[i]);
-    }
-}
-
-function unHighlightPossibleMoves(){
-    for (var i=0; i<POSSIBLE_MOVES.length; i++){
-        drawBlock(POSSIBLE_MOVES[i].col, POSSIBLE_MOVES[i].row);
-    }
-}
-
 function canSelectedMoveToBlock(selectedPiece, clickedBlock) {
 	var bCanMove = false;
 
@@ -224,130 +200,31 @@ function canSelectedMoveToBlock(selectedPiece, clickedBlock) {
 
 function getPieceAtBlock(clickedBlock) {
 
-	var team = (currentTurn === BLACK_TEAM ? myGame.json.black : myGame.json.white);
+	var team = (myGame.currentTurn === BLACK_TEAM ? myGame.json.black : myGame.json.white);
 
 	return getPieceAtBlockForTeam(team, clickedBlock);
 }
 
-function getBlockColour(iRowCounter, iBlockCounter) {
-	var cStartColour;
-
-	// Alternate the block colour
-	if (iRowCounter % 2) {
-		cStartColour = (iBlockCounter % 2 ? BLOCK_COLOUR_1 : BLOCK_COLOUR_2);
-	} else {
-		cStartColour = (iBlockCounter % 2 ? BLOCK_COLOUR_2 : BLOCK_COLOUR_1);
-	}
-
-	return cStartColour;
-}
-
-function drawBlock(iRowCounter, iBlockCounter) {
-	// Set the background
-	ctx.fillStyle = getBlockColour(iRowCounter, iBlockCounter);
-
-	// Draw rectangle for the background
-	ctx.fillRect(iRowCounter * BLOCK_SIZE, iBlockCounter * BLOCK_SIZE,
-		BLOCK_SIZE, BLOCK_SIZE);
-
-	ctx.stroke();
-    
-    // Draw outline
-	drawBoardOutline();
-}
-
-function getImageCoords(pieceCode, bBlackTeam, imageBlockSize) {
-	var imageCoords =  {
-		"x": pieceCode * imageBlockSize,
-		"y": (bBlackTeam ? 0 : imageBlockSize)
-	};
-
-	return imageCoords;
-}
-
-function drawPiece(curPiece, bBlackTeam) {
-    if (curPiece.status == TAKEN){
-        console.log("trying to draw taken piece...");
-        return;
-    }
-    var imageBlockSize = 100;
-	var imageCoords = getImageCoords(curPiece.piece, bBlackTeam, imageBlockSize);
-
-	// Draw the piece onto the canvas
-	ctx.drawImage(pieces,
-		imageCoords.x, imageCoords.y,
-		imageBlockSize, imageBlockSize,
-		curPiece.col * BLOCK_SIZE, curPiece.row * BLOCK_SIZE,
-		BLOCK_SIZE, BLOCK_SIZE);
-}
-
 function removeSelection(selectedPiece) {
-    unHighlightPossibleMoves();
-	drawBlock(selectedPiece.col, selectedPiece.row);
-	drawPiece(selectedPiece, (currentTurn === BLACK_TEAM));
+    var movesValues = myGame.getPossibleMovesForPiece(selectedPiece);
+    var possible_moves = movesValues.moves;
+    myDisplay.unHighlightPossibleMoves(possible_moves);
+	myDisplay.drawBlock(selectedPiece.col, selectedPiece.row);
+	myDisplay.drawPiece(selectedPiece, (currentTurn === BLACK_TEAM), pieces);
 }
 
-function drawTeamOfPieces(teamOfPieces, bBlackTeam) {
-	var iPieceCounter;
-
-	// Loop through each piece and draw it on the canvas	
-	for (iPieceCounter = 0; iPieceCounter < teamOfPieces.length; iPieceCounter++) {
-		drawPiece(teamOfPieces[iPieceCounter], bBlackTeam);
-	}
-}
-
-function drawPieces() {
-	drawTeamOfPieces(myGame.json.black, true);
-	drawTeamOfPieces(myGame.json.white, false);
-}
-
-function drawRow(iRowCounter) {
-	var iBlockCounter;
-
-	// Draw 8 block left to right
-	for (iBlockCounter = 0; iBlockCounter < NUMBER_OF_ROWS; iBlockCounter++) {
-		drawBlock(iRowCounter, iBlockCounter);
-	}
-}
-
-function drawBoard() {
-	var iRowCounter;
-
-	for (iRowCounter = 0; iRowCounter < NUMBER_OF_ROWS; iRowCounter++) {
-		drawRow(iRowCounter);
-	}
-
-	// Draw outline
-	drawBoardOutline();
-}
-
-function drawBoardOutline(){
-    // Draw outline
-    ctx.strokeStyle = "black";
-	ctx.lineWidth = 3;
-	ctx.strokeRect(0, 0,
-		NUMBER_OF_ROWS * BLOCK_SIZE,
-		NUMBER_OF_COLS * BLOCK_SIZE);
-}
-
-function drawOutline(colourToHighlight, ctx, pieceAtBlock){
-    ctx.lineWidth = SELECT_LINE_WIDTH;
-	ctx.strokeStyle = colourToHighlight;
-	ctx.strokeRect((pieceAtBlock.col * BLOCK_SIZE) + SELECT_LINE_WIDTH,
-		(pieceAtBlock.row * BLOCK_SIZE) + SELECT_LINE_WIDTH,
-		BLOCK_SIZE - (SELECT_LINE_WIDTH * 2),
-		BLOCK_SIZE - (SELECT_LINE_WIDTH * 2));
-    
-    // Draw outline
-	drawBoardOutline();
-}
 
 function selectPiece(pieceAtBlock) {
 	// Draw outline
-	drawOutline(HIGHLIGHT_COLOUR, ctx, pieceAtBlock)
+	myDisplay.drawOutline(myDisplay.highlightColor, pieceAtBlock)
     
 	selectedPiece = pieceAtBlock;
-    highlightPossibleMoves(pieceAtBlock);
+    
+    var movesValues = myGame.getPossibleMovesForPiece(selectedPiece);
+    var possible_moves = movesValues.moves;
+    myDisplay.highlightPossibleMoves(possible_moves);
+    
+    setPossibleMoves(pieceAtBlock);
 }
 
 function checkIfPieceClicked(clickedBlock) {
@@ -378,8 +255,11 @@ function checkIfPieceClicked(clickedBlock) {
 
 function movePiece(clickedBlock, enemyPiece) {
 	// Clear the block in the original position
-	drawBlock(selectedPiece.col, selectedPiece.row);
-    unHighlightPossibleMoves();
+	myDisplay.drawBlock(selectedPiece.col, selectedPiece.row);
+    
+    var movesValues = myGame.getPossibleMovesForPiece(selectedPiece);
+    var possible_moves = movesValues.moves;
+    myDisplay.unHighlightPossibleMoves(possible_moves);
     
     
     var move = {"from":{"row":selectedPiece.row, "col":selectedPiece.col} ,                                  "to":{"row":clickedBlock.row, "col":clickedBlock.col}, "taken": enemyPiece};
@@ -390,41 +270,41 @@ function movePiece(clickedBlock, enemyPiece) {
     var moveText = "(" + selectedPiece.row + ", " + selectedPiece.col + ")" +
                    "  to  (" + clickedBlock.row + ", " + clickedBlock.col + ")";
     
-    writeToScoreCard(moveText);
+    myMoveListDisplay.writeNextMove(move);
     
 
-	var team = (currentTurn === WHITE_TEAM ? myGame.json.white : myGame.json.black),
-		opposite = (currentTurn !== WHITE_TEAM ? myGame.json.white : myGame.json.black);
+	var team = (myGame.currentTurn === WHITE_TEAM ? myGame.json.white : myGame.json.black),
+		opposite = (myGame.currentTurn !== WHITE_TEAM ? myGame.json.white : myGame.json.black);
     
 	team[selectedPiece.position].col = clickedBlock.col;
 	team[selectedPiece.position].row = clickedBlock.row;
 
 	if (enemyPiece !== null) {
 		// Clear the piece your about to take
-		drawBlock(enemyPiece.col, enemyPiece.row);
+		myDisplay.drawBlock(enemyPiece.col, enemyPiece.row);
 		opposite[enemyPiece.position].status = TAKEN;
 	}
 
 	// Draw the piece in the new position
-	drawPiece(selectedPiece, (currentTurn === BLACK_TEAM));
+	myDisplay.drawPiece(selectedPiece, (myGame.currentTurn === BLACK_TEAM), pieces);
     
     // Draw outline
-	drawBoardOutline();
+	myDisplay.drawBoardOutline();
     
     // check win condition before changing turn
-    var isGameOver = myGame.hasGameEnded(clickedBlock, currentTurn);
+    var isGameOver = myGame.hasGameEnded(clickedBlock);
     if (isGameOver){
-        if (currentTurn === WHITE_TEAM){
+        if (myGame.currentTurn === WHITE_TEAM){
             WINNING_PLAYER = "White";
         }else{
             WINNING_PLAYER = "Black"
         }
-        GAME_FINISHED = true;
+        myGame.isGameFinished = true;
         draw();
     }
     
     
-	currentTurn = (currentTurn === WHITE_TEAM ? BLACK_TEAM : WHITE_TEAM);
+	myGame.currentTurn = (myGame.currentTurn === WHITE_TEAM ? BLACK_TEAM : WHITE_TEAM);
 
 	selectedPiece = null;
     
@@ -439,7 +319,7 @@ function processComputerMove(){
         //then randomly pick one of them.
         var choosingPiece = true;
         var clickedBlock;
-        var team = (currentTurn === WHITE_TEAM ? myGame.json.white : myGame.json.black);
+        var team = (myGame.currentTurn === WHITE_TEAM ? myGame.json.white : myGame.json.black);
         var randPiece;
         var randidx;
         var piecePos;
@@ -483,10 +363,10 @@ function processComputerMove(){
     var newGame = new Game(NUMBER_OF_ROWS);
     newGame.setPositions(myGame.json);
     
-    var possible_moves = newGame.getPossibleMovesForPlayer(currentTurn);
+    var possible_moves = newGame.getPossibleMovesForPlayer();
     
     console.log("num pieces to move are: " + possible_moves.length.toString());
-    var moveCount = newGame.getMoveCountForPlayer(currentTurn);
+    var moveCount = newGame.getMoveCountForPlayer();
     console.log("Total moves: " + moveCount.toString());
     if (possible_moves.length > 0){
         console.log("First piece at (row, col) (" + possible_moves[0].piece.row.toString() + ", " + possible_moves[0].piece.col.toString() + ") can move to (" + possible_moves[0].moves[0].row.toString() + "," + possible_moves[0].moves[0].col.toString() + ")");
@@ -517,21 +397,16 @@ function processMove(clickedBlock) {
 		movePiece(clickedBlock, enemyPiece);
         
         //player successfully moved peice - now consider computer move
-        if (GAMETYPE == "OnePlayer" && GAME_FINISHED != true){
+        if (GAMETYPE == "OnePlayer" && myGame.isGameFinished != true){
             //remove event listener to allow animation time...
-            canvas.removeEventListener('click',board_click);
+            myDisplay.canvas.removeEventListener('click',board_click);
             processComputerMove();
-            canvas.addEventListener('click',board_click);
+            myDisplay.canvas.addEventListener('click',board_click);
         }
     
 	}
 }
 
-function colorRect(leftX,topY, width,height, drawColor, ctx) {
-	ctx.fillStyle = drawColor;
-	ctx.fillRect(leftX,topY, width,height);
-}
-  
 
 function undoOneMove(){
     //TODO
@@ -544,45 +419,21 @@ function undoOneMove(){
         alert("Game type not implemented...")
     }
     
-    removeLastMoveFromScoreCard();
+    myMoveListDisplay.removeLastMove();
     
-}
-
-function removeLastMoveFromScoreCard(){
-    var move = null;
-    var list = document.getElementById('moveList')
-    var notation = list.lastChild.innerHTML;
-    console.log("Removing move from score card: " + notation);
-    list.removeChild(list.lastChild);
-}
-
-
-function resetScoreCard(){
-    var list = document.getElementById('moveList');
-    while(list.firstChild){
-        list.removeChild(list.firstChild)
-    }
-}
-
-function writeToScoreCard(moveText){
-    var list = document.getElementById('moveList');
-    var node = document.createElement("LI");
-    var textnode = document.createTextNode(moveText);
-    node.appendChild(textnode);
-    list.appendChild(node);
 }
 
 
 function board_click(ev) {
-    var canvasClientRect = canvas.getBoundingClientRect();
+    var canvasClientRect = myDisplay.canvas.getBoundingClientRect();
 	
     var x = ev.clientX - canvasClientRect.left,
 		y = ev.clientY - canvasClientRect.top,
 		clickedBlock = screenToBlock(x, y);
     
-    if (GAME_FINISHED){
-        GAME_FINISHED = false;
-        drawMenuScreen();
+    if (myGame.isGameFinished){
+        myGame.isGameFinished = false;
+        myDisplay.drawMenuScreen();
         return; 
     }
     
@@ -593,49 +444,6 @@ function board_click(ev) {
 	}
 }
 
-function drawWinScreen(canvas, ctx){
-    colorRect(0,0,canvas.width,canvas.height,'black', ctx);
-    ctx.font="30px Arial";
-    ctx.fillStyle = 'white';
-    ctx.textBasline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.fillText(WINNING_PLAYER + " wins!", canvas.width/2, canvas.height/4);
-    ctx.fillText("Click to play again...", canvas.width/2, 3*canvas.height/4);
-}
-
-
-function drawMenuScreen(){
-    canvas.removeEventListener('click', board_click);
-    colorRect(0,0,canvas.width,canvas.height,'black', ctx);
-    ctx.font="30px Arial";
-    ctx.textBasline = 'middle';
-    ctx.textAlign = 'center';
-    
-    OnePlayerButton = {"x":canvas.width/8,
-                       "y":canvas.height/8,
-                       "width":3*canvas.width/4,
-                       "height":1.5*canvas.height/8};
-    
-    TwoPlayerButton = {"x":canvas.width/8,
-                       "y":5*canvas.height/8,
-                       "width":3*canvas.width/4,
-                       "height":1.5*canvas.height/8};
-    
-	ctx.fillStyle = '#debf83';
-	ctx.fillRect(OnePlayerButton.x, OnePlayerButton.y,
-		OnePlayerButton.width, OnePlayerButton.height);
-	ctx.stroke();
-    ctx.fillRect(TwoPlayerButton.x, TwoPlayerButton.y,
-		TwoPlayerButton.width, TwoPlayerButton.height);
-	ctx.stroke();
-    
-    ctx.fillStyle = 'white';
-    ctx.fillText("One player Game", canvas.width/2, canvas.height/4);
-    ctx.fillText("Two player Game", canvas.width/2, 3*canvas.height/4);
-    
-    canvas.addEventListener('click', menu_click, false);
-}
-
 function isInsideButton(pos, button){
     button.x;
     pos.x;
@@ -643,17 +451,18 @@ function isInsideButton(pos, button){
 }
 
 function menu_click(ev) {
-    var canvasClientRect = canvas.getBoundingClientRect();
+    var canvasClientRect = myDisplay.canvas.getBoundingClientRect();
 	
     var x = ev.clientX - canvasClientRect.left,
 		y = ev.clientY - canvasClientRect.top,
 		mousePos = {"x":x, "y":y};
     
-    if(isInsideButton(mousePos, OnePlayerButton)){
+    
+    if(isInsideButton(mousePos, myDisplay.OnePlayerButton)){
         console.log("You clicked One Player button!");
         GAMETYPE = "OnePlayer";
         draw();
-    }else if (isInsideButton(mousePos, TwoPlayerButton)){
+    }else if (isInsideButton(mousePos, myDisplay.TwoPlayerButton)){
         console.log("You clicked Two Player button!");
         GAMETYPE = "TwoPlayer";
         draw();
@@ -662,8 +471,8 @@ function menu_click(ev) {
 }
 
 function resetGlobals(){
-    GAME_FINISHED = false;
-    currentTurn = WHITE_TEAM;
+    myGame.isGameFinished = false;
+    myGame.currentTurn = WHITE_TEAM;
     computerLevel = "EASY";
 }
 
@@ -673,10 +482,11 @@ function startGame(){
     canvas = document.getElementById('raps');
     // Canvas supported?
 	if (canvas.getContext) {
-		ctx = canvas.getContext('2d');
         
-        resetScoreCard();
-        drawMenuScreen();
+        myDisplay.setCanvasandContext(canvas);
+        
+        myMoveListDisplay.resetMoveList();
+        myDisplay.drawMenuScreen();
         resetGlobals();
         
     } else {
@@ -686,22 +496,22 @@ function startGame(){
 
 function draw() {
 	// Main entry point got the HTML5 chess board example
-    canvas.removeEventListener('click', menu_click, false);
+    myDisplay.canvas.removeEventListener('click', menu_click, false);
     
     //set constants for reseting game
-    currentTurn = WHITE_TEAM;
-    resetScoreCard();
+    myGame.currentTurn = WHITE_TEAM;
+    myMoveListDisplay.resetMoveList();
     
-    // Calculdate the precise block size
-    BLOCK_SIZE = canvas.height / NUMBER_OF_ROWS;
+    // Calculate the precise block size
+    BLOCK_SIZE = myDisplay.canvas.height / NUMBER_OF_ROWS;
 
-    if (GAME_FINISHED){
-        drawWinScreen(canvas, ctx);
+    if (myGame.isGameFinished){
+        myDisplay.drawWinScreen();
         return;
     }
 
     // Draw the background
-    drawBoard();
+    myDisplay.drawBoard();
     
     myGame.resetMoveList();
     myGame.setDefaultPositions();
@@ -709,8 +519,8 @@ function draw() {
     // Draw pieces
     pieces = new Image();
     pieces.src = 'pieces.png';
-    pieces.onload = drawPieces;
-
-    canvas.addEventListener('click', board_click, false);
+    pieces.onload = myDisplay.drawPieces(myGame.json.black, myGame.json.white, pieces);
+    
+    myDisplay.canvas.addEventListener('click', board_click, false);
 
 }
