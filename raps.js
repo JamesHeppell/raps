@@ -210,7 +210,7 @@ function removeSelection(selectedPiece) {
     var possible_moves = movesValues.moves;
     myDisplay.unHighlightPossibleMoves(possible_moves);
 	myDisplay.drawBlock(selectedPiece.col, selectedPiece.row);
-	myDisplay.drawPiece(selectedPiece, (currentTurn === BLACK_TEAM), pieces);
+	myDisplay.drawPiece(selectedPiece, (myGame.currentTurn === BLACK_TEAM), pieces);
 }
 
 
